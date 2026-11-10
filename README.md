@@ -3,6 +3,8 @@
 A monospaced adaptation of [Inter](https://rsms.me/inter/), for code and terminals.
 Free and open source under the SIL Open Font License.
 
+**[See the specimen page](https://joyouou.github.io/inter-mono/)** · **[Download](https://github.com/Joyouou/inter-mono/releases/latest)**
+
 ![Inter Mono specimen](docs/specimen.png)
 
 **This is an unofficial derivative.** It is not made, reviewed or endorsed by the
@@ -20,7 +22,7 @@ Inter project. Please don't report its problems to Inter.
 
 ## Install
 
-Download the zip from the Releases page, or take the files in [`fonts/ttf`](fonts/ttf).
+Download the zip from the [latest release](https://github.com/Joyouou/inter-mono/releases/latest), or take the files in [`fonts/ttf`](fonts/ttf).
 
 - **macOS:** open each `.ttf` and choose Install Font.
 - **Windows:** right-click each `.ttf` and choose Install.
