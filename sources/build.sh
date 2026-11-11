@@ -3,7 +3,7 @@
 # Needs: python3 with fonttools, skia-pathops, ttfautohint-py, brotli, pillow.
 set -e
 cd "$(dirname "$0")"
-mkdir -p build ../fonts/ttf ../fonts/ttf-unhinted ../fonts/webfonts
+mkdir -p build ../fonts/ttf ../fonts/ttf-unhinted ../fonts/webfonts ../fonts/caption
 for S in Regular Italic; do
   python3 make_mono.py src/Inter_18pt-$S.ttf build/InterMono-$S.ttf
   cp build/InterMono-$S.ttf ../fonts/ttf-unhinted/
@@ -12,5 +12,10 @@ done
 python3 finish_font.py ../fonts/ttf/InterMono-*.ttf ../fonts/ttf-unhinted/InterMono-*.ttf
 for S in Regular Italic; do
   python3 -c "from fontTools.ttLib import TTFont; f=TTFont('../fonts/ttf/InterMono-$S.ttf'); f.flavor='woff2'; f.save('../fonts/webfonts/InterMono-$S.woff2')"
+done
+# caption colour version
+for S in Regular Italic; do
+  python3 make_caption.py ../fonts/ttf/InterMono-$S.ttf ../fonts/caption/InterMonoCaption-$S.ttf
+  python3 -c "from fontTools.ttLib import TTFont; f=TTFont('../fonts/caption/InterMonoCaption-$S.ttf'); f.flavor='woff2'; f.save('../fonts/caption/InterMonoCaption-$S.woff2')"
 done
 python3 proof.py build/proof.png ../fonts/ttf/InterMono-Regular.ttf ../fonts/ttf/InterMono-Italic.ttf src/Inter_18pt-Regular.ttf

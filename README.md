@@ -18,7 +18,26 @@ Inter project. Please don't report its problems to Inter.
 - Wide letters (m, w, M, W) are narrowed with their stroke weight kept.
 - Narrow letters (i, j, l, r, f, t) get slabs so they fill the cell.
 - `1 l I |` and `0 O` are all distinct: flag one, tailed l, serifed I, slashed zero.
+- Square dots on i and j, accents and punctuation (Inter's own square set).
 - No kerning and no ligatures, so columns always line up.
+
+## Caption version
+
+![Inter Mono Caption](docs/caption.png)
+
+**Inter Mono Caption** is a colour-font version for the look of television closed captions.
+Every character, the space included, sits on an opaque black box, and the boxes join into a bar.
+
+- The letters take the text colour you set (white, yellow, cyan …). The box is always black.
+  With the default black text the letters are invisible, so set a colour.
+- Use the default line height, so the lines stack without gaps.
+- It needs a program that supports colour fonts (the COLR format). Browsers and current
+  Windows and macOS do; many video and subtitle tools do not, and show plain letters.
+- For software that cannot set a text colour, build a fixed-white version with
+  `python3 sources/make_caption.py <font.ttf> <out.ttf> --white`.
+- Tested in Chrome on macOS only.
+
+The files are in [`fonts/caption`](fonts/caption).
 
 ## Install
 
@@ -57,6 +76,7 @@ The `.woff2` files are in [`fonts/webfonts`](fonts/webfonts).
 | `fonts/ttf` | Hinted fonts, for installing |
 | `fonts/ttf-unhinted` | The same without hinting |
 | `fonts/webfonts` | `.woff2` for websites |
+| `fonts/caption` | Inter Mono Caption, `.ttf` and `.woff2` |
 | `docs` | Specimen page (works with GitHub Pages) |
 | `sources` | Build scripts and the Inter fonts they start from |
 
@@ -73,6 +93,7 @@ sh sources/build.sh
 ## Known limits
 
 - Regular and Italic only; no Bold.
+- No music note (♪) yet, which captions often use.
 - A few very wide characters are cramped in one cell (for example Ѹ and ₯).
 - Tested on macOS. Hinting on Windows has not been checked by eye.
 

@@ -21,6 +21,7 @@ Italic glyphs are de-slanted before any of this and re-slanted after.
 """
 import io
 import math
+import os
 from collections import Counter
 import sys
 import unicodedata
@@ -71,13 +72,17 @@ BOX_LIGHT, BOX_HEAVY = 150, 300
 BOX_DOUBLE = 150     # centre-to-centre half-distance of double box lines
 UNIFORM = "@‰‱™℠"   # too intricate to squeeze sideways only
 FULL_RULES = "_‾‗"   # rules that run edge to edge so repeats join
-VERSION = "1.400"
+VERSION = "1.500"
 
-# baked into the default glyphs: tabular figures, slashed zero, tailed l, serifed I
-BAKE = ["tnum", "zero", "cv05", "cv08"]
+# baked into the default glyphs: tabular figures, slashed zero, tailed l, serifed I,
+# square dots (Inter's own "square punctuation" set: i j, accents, . : ; ! ?)
+BAKE = ["tnum", "zero", "cv05", "cv08", "ss07"]
 KEEP_FEATURES = ["ccmp", "locl", "mark", "mkmk", "case", "frac", "numr", "dnom",
                  "sups", "subs", "sinf", "ordn", "salt", "aalt"] + \
     [f"ss0{i}" for i in range(1, 9)] + [f"cv{i:02d}" for i in range(1, 15)]
+
+# trial switch: PLAIN=1 leaves i j l r f t as Inter draws them, only centred
+PLAIN = bool(os.environ.get("PLAIN"))
 
 # narrow letters: name -> (builder, args)
 L_LIKE = ["l.ss02"]
@@ -585,7 +590,8 @@ class Mono:
         elif name in R_LIKE:
             c = (a + b) / 2
             P = moved(P, lambda x, y: (b + (x - b) * 1.3 if x > b else x, y))
-            P = union(P, rect(c - FOOT_R, 0, c + FOOT_R, BAR))
+            P = union(P, rect(a - HEAD, XH - BAR, a + 1, XH),      # head stroke, as on i
+                      rect(c - FOOT_R, 0, c + FOOT_R, BAR))
         dx = self.place(name, P)
         self.maps[name] = (1, dx)   # marks follow the stem, which only moved
 
@@ -642,6 +648,8 @@ class Mono:
         return x0, x1
 
     def is_special(self, name):
+        if PLAIN:
+            return False
         return name in L_LIKE + I_LIKE + J_LIKE + R_LIKE or name in FT_LIKE
 
     def ink(self, name):
@@ -812,6 +820,13 @@ def bake_defaults(font):
         for t in font["cmap"].tables:
             if t.isUnicode():
                 t.cmap = {u: mapping.get(g, g) for u, g in t.cmap.items()}
+        if tag == "ss07":     # letters Inter's set leaves out (і ј ё ї Ȧ …) get the square dots too
+            glyf = font["glyf"]
+            for name in font.getGlyphOrder():
+                g = glyf[name]
+                if g.isComposite():
+                    for c in g.components:
+                        c.glyphName = mapping.get(c.glyphName, c.glyphName)
 
 
 # ------------------------------------------------------------ box drawing
