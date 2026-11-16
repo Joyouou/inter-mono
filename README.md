@@ -45,7 +45,8 @@ Every character, the space included, sits on an opaque black box, and the boxes 
 - The line height is exactly 1.2 times the size, and the box stays upright in Italic.
 - Other levels: `python3 sources/make_caption.py <font.ttf> <out.ttf> --alpha 60`.
 
-The music notes ♩ ♪ ♫ ♬ are in all the fonts since version 1.600.
+The music notes ♩ ♪ ♫ ♬ are in all the fonts since version 1.600, and the telephone ☎ and
+electric arrow ⌁ (used in subtitles for speech over a phone or loudspeaker) since 1.610.
 
 The files are in [`fonts/caption`](fonts/caption).
 

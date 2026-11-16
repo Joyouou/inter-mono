@@ -72,7 +72,7 @@ BOX_LIGHT, BOX_HEAVY = 150, 300
 BOX_DOUBLE = 150     # centre-to-centre half-distance of double box lines
 UNIFORM = "@‰‱™℠"   # too intricate to squeeze sideways only
 FULL_RULES = "_‾‗"   # rules that run edge to edge so repeats join
-VERSION = "1.600"
+VERSION = "1.610"
 
 # baked into the default glyphs: tabular figures, slashed zero, tailed l, serifed I,
 # square dots (Inter's own "square punctuation" set: i j, accents, . : ; ! ?)
@@ -714,6 +714,7 @@ class Mono:
         self.anchors()
         add_box_drawing(self.font, self)
         add_music(self.font, self)
+        add_symbols(self.font, self)
         finish(self.font)
         return self.font
 
@@ -1091,6 +1092,71 @@ def note_flag(x, top):
     return p
 
 
+def add_shapes(font, mono, shapes):
+    """Adds new glyphs {codepoint: path}, each centred in the cell."""
+    order = font.getGlyphOrder()
+    gdef = font["GDEF"].table.GlyphClassDef.classDefs
+    for u, path in shapes.items():
+        gname = f"uni{u:04X}"
+        if gname in font["glyf"].glyphs:
+            continue
+        x0, _, x1, _ = path.bounds
+        path = moved(path, lambda X, Y, sh=(CELL - x0 - x1) / 2: (X + sh, Y))
+        order.append(gname)
+        font["glyf"][gname] = TTGlyphPen(None).glyph()
+        mono.write(gname, path)                    # re-slants for the Italic
+        gdef[gname] = 1
+        for t in font["cmap"].tables:
+            if t.isUnicode() and t.format in (4, 12):
+                t.cmap[u] = gname
+    font.setGlyphOrder(order)
+
+
+def disc(cx, cy, r):
+    k = 0.5523 * r
+    p = pathops.Path()
+    pen = p.getPen()
+    pen.moveTo((cx + r, cy))
+    pen.curveTo((cx + r, cy + k), (cx + k, cy + r), (cx, cy + r))
+    pen.curveTo((cx - k, cy + r), (cx - r, cy + k), (cx - r, cy))
+    pen.curveTo((cx - r, cy - k), (cx - k, cy - r), (cx, cy - r))
+    pen.curveTo((cx + k, cy - r), (cx + r, cy - k), (cx + r, cy))
+    pen.closePath()
+    return p
+
+
+def poly(*pts):
+    p = pathops.Path()
+    pen = p.getPen()
+    pen.moveTo(pts[0])
+    for q in pts[1:]:
+        pen.lineTo(q)
+    pen.closePath()
+    return p
+
+
+def add_symbols(font, mono):
+    """Two symbols subtitles use that Inter does not have: the telephone
+    (U+260E, speech heard over a phone) and the electric arrow (U+2301, speech
+    from a radio or loudspeaker)."""
+    # telephone: a handset resting on a body with a dial
+    y = 170
+    body = union(poly((60, y), (130, y + 620), (870, y + 620), (940, y)), rect(250, y + 600, 750, y + 720))
+    body = pathops.op(body, disc(500, y + 300, 165), pathops.PathOp.DIFFERENCE)
+    hand = union(rect(0, y + 880, 1000, y + 1110), rect(0, y + 740, 270, y + 1110), rect(730, y + 740, 1000, y + 1110))
+    phone = union(body, hand)
+    # electric arrow: a zigzag with an arrowhead
+    t = 68
+    pts = [(0, 1130), (620, 880), (330, 760), (880, 520)]
+    zig = [line_poly(pts[i], pts[i + 1], t) for i in range(3)] + [disc(*p, t) for p in pts[:3]]
+    (x0, y0), (x1, y1) = pts[2], pts[3]
+    d = math.hypot(x1 - x0, y1 - y0)
+    ux, uy = (x1 - x0) / d, (y1 - y0) / d
+    zig.append(poly((x1 + ux * 190, y1 + uy * 190), (x1 - uy * 150, y1 + ux * 150), (x1 + uy * 150, y1 - ux * 150)))
+    add_shapes(font, mono, {0x260E: phone, 0x2301: union(*zig)})
+    print("symbols: 2 glyphs")
+
+
 def add_music(font, mono):
     """U+2669-266C, which Inter does not have: drawn here from a head, a stem
     and a flag or beam, as tall as the capitals, leaning with the Italic."""
@@ -1119,23 +1185,7 @@ def add_music(font, mono):
             parts.append(q)
         return parts
     shapes = {0x2669: single(False), 0x266A: single(True), 0x266B: beamed(1), 0x266C: beamed(2)}
-    order = font.getGlyphOrder()
-    gdef = font["GDEF"].table.GlyphClassDef.classDefs
-    for u, parts in shapes.items():
-        gname = f"uni{u:04X}"
-        if gname in font["glyf"].glyphs:
-            continue
-        path = union(*parts)
-        x0, _, x1, _ = path.bounds
-        path = moved(path, lambda X, Y, sh=(CELL - x0 - x1) / 2: (X + sh, Y))
-        order.append(gname)
-        font["glyf"][gname] = TTGlyphPen(None).glyph()
-        mono.write(gname, path)                    # re-slants for the Italic
-        gdef[gname] = 1
-        for t in font["cmap"].tables:
-            if t.isUnicode() and t.format in (4, 12):
-                t.cmap[u] = gname
-    font.setGlyphOrder(order)
+    add_shapes(font, mono, {u: union(*parts) for u, parts in shapes.items()})
     print("music notes:", len(shapes), "glyphs")
 
 
