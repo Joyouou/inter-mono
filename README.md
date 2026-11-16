@@ -37,6 +37,16 @@ Every character, the space included, sits on an opaque black box, and the boxes 
   `python3 sources/make_caption.py <font.ttf> <out.ttf> --white`.
 - Tested in Chrome on macOS only.
 
+**See-through boxes.** Inter Mono Caption 75, 50 and 25 are the same font with a box that is
+75, 50 or 25 percent opaque, so the picture shows through.
+
+- Use a size that is a multiple of 5 px (20, 25, 30 …). The boxes then fall on whole pixels and
+  join cleanly. At other sizes thin lines show between them.
+- The line height is exactly 1.2 times the size, and the box stays upright in Italic.
+- Other levels: `python3 sources/make_caption.py <font.ttf> <out.ttf> --alpha 60`.
+
+The music notes ♩ ♪ ♫ ♬ are in all the fonts since version 1.600.
+
 The files are in [`fonts/caption`](fonts/caption).
 
 ## Install
@@ -93,7 +103,6 @@ sh sources/build.sh
 ## Known limits
 
 - Regular and Italic only; no Bold.
-- No music note (♪) yet, which captions often use.
 - A few very wide characters are cramped in one cell (for example Ѹ and ₯).
 - Tested on macOS. Hinting on Windows has not been checked by eye.
 

@@ -16,6 +16,11 @@ done
 # caption colour version
 for S in Regular Italic; do
   python3 make_caption.py ../fonts/ttf/InterMono-$S.ttf ../fonts/caption/InterMonoCaption-$S.ttf
-  python3 -c "from fontTools.ttLib import TTFont; f=TTFont('../fonts/caption/InterMonoCaption-$S.ttf'); f.flavor='woff2'; f.save('../fonts/caption/InterMonoCaption-$S.woff2')"
+  for A in 75 50 25; do   # see-through boxes
+    python3 make_caption.py ../fonts/ttf/InterMono-$S.ttf ../fonts/caption/InterMonoCaption$A-$S.ttf --alpha $A
+  done
+  for A in "" 75 50 25; do
+    python3 -c "from fontTools.ttLib import TTFont; f=TTFont('../fonts/caption/InterMonoCaption$A-$S.ttf'); f.flavor='woff2'; f.save('../fonts/caption/InterMonoCaption$A-$S.woff2')"
+  done
 done
 python3 proof.py build/proof.png ../fonts/ttf/InterMono-Regular.ttf ../fonts/ttf/InterMono-Italic.ttf src/Inter_18pt-Regular.ttf

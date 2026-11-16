@@ -72,7 +72,7 @@ BOX_LIGHT, BOX_HEAVY = 150, 300
 BOX_DOUBLE = 150     # centre-to-centre half-distance of double box lines
 UNIFORM = "@‰‱™℠"   # too intricate to squeeze sideways only
 FULL_RULES = "_‾‗"   # rules that run edge to edge so repeats join
-VERSION = "1.500"
+VERSION = "1.600"
 
 # baked into the default glyphs: tabular figures, slashed zero, tailed l, serifed I,
 # square dots (Inter's own "square punctuation" set: i j, accents, . : ; ! ?)
@@ -713,6 +713,7 @@ class Mono:
         self.pairs()
         self.anchors()
         add_box_drawing(self.font, self)
+        add_music(self.font, self)
         finish(self.font)
         return self.font
 
@@ -1053,6 +1054,89 @@ def shade(kind, T, B):
             if on:
                 out.append(rect(i * w, B + j * h, (i + 1) * w, B + (j + 1) * h))
     return out
+
+
+# ------------------------------------------------------------ music notes
+NOTE_STEM = 120      # stem of a note
+NOTE_HEAD = (250, 175, 22)   # head: half-width, half-height, tilt in degrees
+NOTE_BEAM = 190      # thickness of the beam joining two notes
+NOTE_SPAN = 520      # distance between the two stems of a beamed pair
+NOTE_RISE = 90       # how much the beam climbs from the left stem to the right
+
+
+def note_head(cx, cy):
+    a, b, tilt = NOTE_HEAD
+    k = 0.5523
+    p = pathops.Path()
+    pen = TransformPen(p.getPen(), Transform().translate(cx, cy).rotate(math.radians(tilt)))
+    pen.moveTo((a, 0))
+    pen.curveTo((a, b * k), (a * k, b), (0, b))
+    pen.curveTo((-a * k, b), (-a, b * k), (-a, 0))
+    pen.curveTo((-a, -b * k), (-a * k, -b), (0, -b))
+    pen.curveTo((a * k, -b), (a, -b * k), (a, 0))
+    pen.closePath()
+    return p
+
+
+def note_flag(x, top):
+    """Flag hanging from the top of a stem whose right edge is x."""
+    p = pathops.Path()
+    pen = p.getPen()
+    pen.moveTo((x - NOTE_STEM, top))
+    pen.lineTo((x, top))
+    pen.curveTo((x + 40, top - 250), (x + 400, top - 340), (x + 330, top - 760))
+    pen.curveTo((x + 310, top - 520), (x + 130, top - 430), (x, top - 360))
+    pen.lineTo((x - NOTE_STEM, top - 360))
+    pen.closePath()
+    return p
+
+
+def add_music(font, mono):
+    """U+2669-266C, which Inter does not have: drawn here from a head, a stem
+    and a flag or beam, as tall as the capitals, leaning with the Italic."""
+    top = font["OS/2"].sCapHeight
+    a, b, tilt = NOTE_HEAD
+    hy = b * 1.06                                  # head centre: the head sits on the baseline
+    reach = a * math.cos(math.radians(tilt))       # head centre to the stem's right edge
+    def single(flag):
+        sx = reach
+        parts = [note_head(0, hy), rect(sx - NOTE_STEM, hy, sx, top)]
+        if flag:
+            parts.append(note_flag(sx, top))
+        return parts
+    def beamed(beams):
+        parts = []
+        for i, cx in enumerate((0, NOTE_SPAN)):
+            sx, lift = cx + reach, i * NOTE_RISE
+            parts += [note_head(cx, hy + lift), rect(sx - NOTE_STEM, hy + lift, sx, top - NOTE_RISE + lift)]
+        x0, x1 = reach - NOTE_STEM, NOTE_SPAN + reach
+        for n in range(beams):
+            y = top - NOTE_RISE - n * NOTE_BEAM * 1.55
+            q = pathops.Path()
+            pen = q.getPen()
+            pen.moveTo((x0, y - NOTE_BEAM)); pen.lineTo((x0, y)); pen.lineTo((x1, y + NOTE_RISE))
+            pen.lineTo((x1, y + NOTE_RISE - NOTE_BEAM)); pen.closePath()
+            parts.append(q)
+        return parts
+    shapes = {0x2669: single(False), 0x266A: single(True), 0x266B: beamed(1), 0x266C: beamed(2)}
+    order = font.getGlyphOrder()
+    gdef = font["GDEF"].table.GlyphClassDef.classDefs
+    for u, parts in shapes.items():
+        gname = f"uni{u:04X}"
+        if gname in font["glyf"].glyphs:
+            continue
+        path = union(*parts)
+        x0, _, x1, _ = path.bounds
+        path = moved(path, lambda X, Y, sh=(CELL - x0 - x1) / 2: (X + sh, Y))
+        order.append(gname)
+        font["glyf"][gname] = TTGlyphPen(None).glyph()
+        mono.write(gname, path)                    # re-slants for the Italic
+        gdef[gname] = 1
+        for t in font["cmap"].tables:
+            if t.isUnicode() and t.format in (4, 12):
+                t.cmap[u] = gname
+    font.setGlyphOrder(order)
+    print("music notes:", len(shapes), "glyphs")
 
 
 # ------------------------------------------------------------- the tables
