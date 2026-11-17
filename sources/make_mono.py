@@ -72,7 +72,7 @@ BOX_LIGHT, BOX_HEAVY = 150, 300
 BOX_DOUBLE = 150     # centre-to-centre half-distance of double box lines
 UNIFORM = "@‰‱™℠"   # too intricate to squeeze sideways only
 FULL_RULES = "_‾‗"   # rules that run edge to edge so repeats join
-VERSION = "1.610"
+VERSION = "1.611"
 
 # baked into the default glyphs: tabular figures, slashed zero, tailed l, serifed I,
 # square dots (Inter's own "square punctuation" set: i j, accents, . : ; ! ?)

@@ -103,10 +103,12 @@ def main(src, dst, white=False, alpha=100):
             layers[g] = [(g, letter)]            # combining marks
     font["COLR"] = buildCOLR(layers, version=0, glyphMap=font.getReverseGlyphMap())
     font["CPAL"] = buildCPAL([palette])
-    # Programs that space lines by the Windows metrics get the same line
-    # height as the box, so lines stack without gaps there too.
-    font["OS/2"].usWinAscent = font["hhea"].ascent
-    font["OS/2"].usWinDescent = -font["hhea"].descent + overlap
+    # Windows metrics only set the clipping area here: USE_TYPO_METRICS is on,
+    # so DirectWrite spaces lines by the typo metrics, and GDI (which spaces by
+    # these) draws no colour layers anyway. Cover the box and every glyph.
+    os2 = font["OS/2"]
+    os2.usWinAscent = max(os2.usWinAscent, font["hhea"].ascent)
+    os2.usWinDescent = max(os2.usWinDescent, -font["hhea"].descent + overlap)
     rename(font, family, "opaque" if alpha == 100 else f"{alpha}% opaque")
     font.save(dst)
     print("wrote", dst, "-", len(layers), "colour glyphs, cell", cell)
